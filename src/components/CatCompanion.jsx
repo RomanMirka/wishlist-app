@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import pixelCat from "../assets/pixel-cat.gif";
 
 export default function CatCompanion() {
+  const hasFinePointer = window.matchMedia(
+    "(hover: hover) and (pointer: fine)",
+  ).matches;
   const [position, setPosition] = useState({ left: "50vw", top: "55vh" });
   const [sleeping, setSleeping] = useState(false);
   const [frozenFrame, setFrozenFrame] = useState(null);
@@ -15,6 +18,8 @@ export default function CatCompanion() {
   const spinResetTimer = useRef(null);
 
   useEffect(() => {
+    if (!hasFinePointer) return undefined;
+
     const fallAsleep = () => {
       if (sleepingRef.current) return;
       const image = catImage.current;
@@ -82,7 +87,9 @@ export default function CatCompanion() {
       window.removeEventListener("pointermove", followPointer);
       window.removeEventListener("pointerdown", followPointer);
     };
-  }, []);
+  }, [hasFinePointer]);
+
+  if (!hasFinePointer) return null;
 
   return (
     <div

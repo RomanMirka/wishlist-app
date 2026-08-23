@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import Taskbar from "./components/Taskbar";
 import WishlistCard from "./components/WishlistCard";
@@ -7,6 +7,26 @@ import NameGate from "./components/NameGate";
 import CatCompanion from "./components/CatCompanion";
 
 const STORAGE_KEY = "wishlist_user_name";
+const PARTICLES = [
+  ["8%", "12%", 5, -4, 13, 24, -38],
+  ["88%", "28%", 3, -11, 18, -18, -44],
+  ["5%", "58%", 4, -2, 16, 28, -32],
+  ["82%", "76%", 5, -15, 20, -24, -46],
+  ["74%", "43%", 3, -8, 15, 18, -52],
+  ["25%", "88%", 4, -5, 19, 32, -42],
+  ["61%", "7%", 3, -13, 17, -22, -34],
+  ["48%", "68%", 4, -7, 14, 26, -40],
+  ["34%", "22%", 2, -10, 21, -16, -28],
+  ["94%", "54%", 4, -1, 16, 20, -50],
+  ["16%", "39%", 3, -14, 18, 30, -30],
+  ["67%", "83%", 2, -6, 15, -28, -36],
+  ["42%", "46%", 3, -12, 22, 18, -58],
+  ["91%", "10%", 2, -3, 17, -22, -26],
+  ["12%", "73%", 4, -9, 20, 24, -48],
+  ["56%", "31%", 2, -16, 14, -18, -42],
+  ["72%", "61%", 3, -5, 19, 28, -34],
+  ["31%", "6%", 2, -11, 16, 16, -30],
+];
 
 export default function App() {
   const [userName, setUserName] = useState(() =>
@@ -18,8 +38,6 @@ export default function App() {
   const [showNameGate, setShowNameGate] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isNight, setIsNight] = useState(() => isNightTime());
-
-  const orbs = useMemo(() => makeOrbs(), []);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -33,8 +51,14 @@ export default function App() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "items" },
-        () => {
-          fetchItems();
+        (payload) => {
+          if (payload.eventType === "DELETE") {
+            setItems((current) =>
+              current.filter((item) => item.id !== payload.old.id),
+            );
+            return;
+          }
+          upsertItem(payload.new);
         },
       )
       .subscribe();
@@ -64,33 +88,58 @@ export default function App() {
     setLoading(false);
   }
 
-  async function handleAdd(form) {
-    const { error } = await supabase.from("items").insert({
-      title: form.title.trim(),
-      price: form.price.trim() || null,
-      place: form.place.trim() || null,
-      link: form.link.trim() || null,
-      image_url: form.image_url.trim() || null,
-      note: form.note.trim() || null,
-      added_by: userName,
+  function upsertItem(nextItem) {
+    setItems((current) => {
+      const withoutUpdatedItem = current.filter(
+        (item) => item.id !== nextItem.id,
+      );
+      return [nextItem, ...withoutUpdatedItem].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      );
     });
+  }
+
+  async function handleAdd(form) {
+    const { data, error } = await supabase
+      .from("items")
+      .insert({
+        title: form.title.trim(),
+        price: form.price.trim() || null,
+        place: form.place.trim() || null,
+        link: form.link.trim() || null,
+        image_url: form.image_url.trim() || null,
+        note: form.note.trim() || null,
+        added_by: userName,
+      })
+      .select()
+      .single();
     if (error) throw error;
-    fetchItems();
+    upsertItem(data);
   }
 
   async function handleClaim(item) {
     const nextClaimedBy = item.claimed_by ? null : userName;
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("items")
       .update({ claimed_by: nextClaimedBy })
-      .eq("id", item.id);
-    if (!error) fetchItems();
+      .eq("id", item.id)
+      .select()
+      .single();
+    if (error) {
+      setErrorMsg(error.message);
+      return;
+    }
+    upsertItem(data);
   }
 
   async function handleDelete(item) {
     if (!confirm(`Видалити «${item.title}» зі списку?`)) return;
     const { error } = await supabase.from("items").delete().eq("id", item.id);
-    if (!error) fetchItems();
+    if (error) {
+      setErrorMsg(error.message);
+      return;
+    }
+    setItems((current) => current.filter(({ id }) => id !== item.id));
   }
 
   function saveUserName(name) {
@@ -105,10 +154,25 @@ export default function App() {
 
   return (
     <div className={`app-background ${isNight ? "theme-night" : "theme-day"}`}>
+      <div className="ambient-motion" aria-hidden="true" />
+      <div className="ambient-particles" aria-hidden="true">
+        {PARTICLES.map(([left, top, size, delay, duration, x, y], index) => (
+          <span
+            key={index}
+            className="ambient-particle"
+            style={{
+              "--particle-left": left,
+              "--particle-top": top,
+              "--particle-size": `${size}px`,
+              "--particle-delay": `${delay}s`,
+              "--particle-duration": `${duration}s`,
+              "--particle-x": `${x}px`,
+              "--particle-y": `${-y}px`,
+            }}
+          />
+        ))}
+      </div>
       <CatCompanion />
-      {orbs.map((o) => (
-        <div key={o.id} className="background-orb" style={o.style} />
-      ))}
 
       {!userName && <NameGate onSubmit={saveUserName} />}
       {showNameGate && userName && (
@@ -119,7 +183,17 @@ export default function App() {
         <div className="hero-section">
           <div className="hero-content">
             <div className="hero-brand">
-              <div className="site-logo" aria-label="Список бажань">♥</div>
+              <div className="site-logo" aria-label="Список бажань">
+                <svg
+                  className="site-logo-wish-icon"
+                  viewBox="0 0 32 32"
+                  aria-hidden="true"
+                >
+                  <path d="m20.8 3.5 1.7 5.3 5.3 1.7-5.3 1.7-1.7 5.3-1.7-5.3-5.3-1.7 5.3-1.7z" />
+                  <path d="m11.3 13.2 1.3 4 4 1.3-4 1.3-1.3 4-1.3-4-4-1.3 4-1.3z" />
+                  <path d="M4.5 27.5 17 22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+              </div>
               <div>
                 <h1 className="hero-title">
                   Список бажань
@@ -174,7 +248,6 @@ export default function App() {
       </main>
 
       <Taskbar
-        count={items.length}
         userName={userName ?? "..."}
         onChangeUser={() => setShowNameGate(true)}
         onAdd={() => setShowAdd(true)}
@@ -185,34 +258,6 @@ export default function App() {
       )}
     </div>
   );
-}
-
-function makeOrbs() {
-  const configs = [
-    { top: "4%", size: 70, dur: 46, tint: "rgba(0,209,178,0.5)", scale: 1 },
-    { top: "16%", size: 42, dur: 34, tint: "rgba(193,79,224,0.4)", scale: 0.9 },
-    { top: "2%", size: 100, dur: 60, tint: "rgba(28,111,224,0.4)", scale: 1.1 },
-    { top: "28%", size: 30, dur: 26, tint: "rgba(255,93,143,0.4)", scale: 0.8 },
-    {
-      top: "9%",
-      size: 55,
-      dur: 52,
-      tint: "rgba(255,201,60,0.35)",
-      scale: 0.95,
-    },
-  ];
-  return configs.map((c, i) => ({
-    id: i,
-    style: {
-      top: c.top,
-      width: c.size,
-      height: c.size,
-      "--orb-tint": c.tint,
-      "--s": c.scale,
-      animationDuration: `${c.dur}s`,
-      animationDelay: `${-i * 13}s`,
-    },
-  }));
 }
 
 function isNightTime() {

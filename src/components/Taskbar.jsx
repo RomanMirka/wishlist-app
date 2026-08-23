@@ -1,17 +1,4 @@
-import { useEffect, useState } from "react";
-
-export default function Taskbar({ count, userName, onChangeUser, onAdd }) {
-  const [time, setTime] = useState(new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setTime(new Date()), 1000 * 30);
-    return () => clearInterval(id);
-  }, []);
-
-  const timeStr = time.toLocaleTimeString("uk-UA", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+export default function Taskbar({ userName, onChangeUser, onAdd }) {
 
   return (
     <div className="toolbar-container">

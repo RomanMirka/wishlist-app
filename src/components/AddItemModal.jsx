@@ -54,7 +54,8 @@ export default function AddItemModal({ onClose, onSave }) {
                 <input
                   value={form.price}
                   onChange={update('price')}
-                  placeholder="напр. 2500 грн"
+                  inputMode="decimal"
+                  placeholder="напр. 2500"
                   className="form-input"
                 />
               </Field>

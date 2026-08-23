@@ -1,12 +1,12 @@
-import { useState } from 'react'
+import { useState } from "react";
 
 export default function NameGate({ onSubmit, initial }) {
-  const [name, setName] = useState(initial ?? '')
+  const [name, setName] = useState(initial ?? "");
 
   const submit = (e) => {
-    e.preventDefault()
-    if (name.trim()) onSubmit(name.trim())
-  }
+    e.preventDefault();
+    if (name.trim()) onSubmit(name.trim());
+  };
 
   return (
     <div className="name-gate">
@@ -22,17 +22,14 @@ export default function NameGate({ onSubmit, initial }) {
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="напр. Аня"
+            placeholder="Твоє ім'я"
             className="form-input"
           />
-          <button
-            type="submit"
-            className="primary-button name-gate-button"
-          >
-            Зайти у список
+          <button type="submit" className="primary-button name-gate-button">
+            Увійти
           </button>
         </div>
       </form>
     </div>
-  )
+  );
 }

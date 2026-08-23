@@ -1,47 +1,52 @@
+import { useEffect, useState } from "react";
+
 export default function WishlistCard({ item, currentUser, onClaim, onDelete }) {
-  const isClaimed = Boolean(item.claimed_by)
-  const claimedByMe = item.claimed_by === currentUser
+  const [imageFailed, setImageFailed] = useState(false);
+  const isClaimed = Boolean(item.claimed_by);
+  const claimedByMe = item.claimed_by === currentUser;
+
+  useEffect(() => setImageFailed(false), [item.image_url]);
 
   return (
-    <article className={`wishlist-card ${isClaimed ? 'wishlist-card--claimed' : ''}`}>
+    <article
+      className={`wishlist-card ${isClaimed ? "wishlist-card--claimed" : ""}`}
+    >
       <div className="dialog-titlebar">
-        <span className="item-title">
-          {item.title}
-        </span>
+        <span className="item-title">{item.title}</span>
         <div className="card-actions">
           <button
             className="dialog-icon-button dialog-icon-button--claim"
-            title={isClaimed ? 'Зняти позначку "куплено"' : 'Позначити як куплено'}
+            title={
+              isClaimed ? 'Зняти позначку "куплено"' : "Позначити як куплено"
+            }
             onClick={() => onClaim(item)}
           >
-            {isClaimed ? '✓' : '●'}
+            {isClaimed ? "✓" : "●"}
           </button>
-          <button className="dialog-icon-button dialog-icon-button--close" title="Видалити" onClick={() => onDelete(item)}>
+          <button
+            className="dialog-icon-button dialog-icon-button--close"
+            title="Видалити"
+            onClick={() => onDelete(item)}
+          >
             ✕
           </button>
         </div>
       </div>
 
       <div className="item-image-container">
-        {item.image_url ? (
+        {item.image_url && !imageFailed ? (
           <img
             src={item.image_url}
             alt={item.title}
             className="item-image"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none'
-            }}
+            onError={() => setImageFailed(true)}
           />
         ) : (
-          <div className="image-placeholder">
-            щось дуже бажане
-          </div>
+          <div className="image-placeholder">щось дуже бажане</div>
         )}
 
         {item.price && (
-          <span className="price-badge">
-            {item.price}
-          </span>
+          <span className="price-badge">{formatPrice(item.price)}</span>
         )}
       </div>
 
@@ -49,11 +54,7 @@ export default function WishlistCard({ item, currentUser, onClaim, onDelete }) {
         {item.note && <p className="item-note">{item.note}</p>}
 
         <div className="item-links">
-          {item.place && (
-            <span className="store-label">
-              {item.place}
-            </span>
-          )}
+          {item.place && <span className="store-label">{item.place}</span>}
           {item.link && (
             <a
               href={item.link}
@@ -61,7 +62,7 @@ export default function WishlistCard({ item, currentUser, onClaim, onDelete }) {
               rel="noreferrer"
               className="product-link"
             >
-              переглянути ↗
+              Переглянути ↗
             </a>
           )}
         </div>
@@ -69,12 +70,23 @@ export default function WishlistCard({ item, currentUser, onClaim, onDelete }) {
         <div className="item-metadata">
           <span>додав(ла): {item.added_by}</span>
           {isClaimed && (
-            <span className={claimedByMe ? 'claim-status claim-status--current-user' : 'claim-status'}>
+            <span
+              className={
+                claimedByMe
+                  ? "claim-status claim-status--current-user"
+                  : "claim-status"
+              }
+            >
               куплено: {item.claimed_by}
             </span>
           )}
         </div>
       </div>
     </article>
-  )
+  );
+}
+
+function formatPrice(price) {
+  const value = price.trim();
+  return /(?:грн|₴|uah)/i.test(value) ? value : `${value} грн`;
 }
