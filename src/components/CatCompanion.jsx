@@ -2,10 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import pixelCat from "../assets/pixel-cat.gif";
 
 export default function CatCompanion() {
-  const hasFinePointer = window.matchMedia(
-    "(hover: hover) and (pointer: fine)",
-  ).matches;
-  const [position, setPosition] = useState({ left: "50vw", top: "55vh" });
+  const [hasFinePointer, setHasFinePointer] = useState(false);
+  const [position, setPosition] = useState({ left: "50%", top: "55%" });
   const [sleeping, setSleeping] = useState(false);
   const [frozenFrame, setFrozenFrame] = useState(null);
   const [spin, setSpin] = useState("");
@@ -18,12 +16,18 @@ export default function CatCompanion() {
   const spinResetTimer = useRef(null);
 
   useEffect(() => {
-    if (!hasFinePointer) return undefined;
+    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const updatePointerType = () => setHasFinePointer(mediaQuery.matches);
+    updatePointerType();
+    mediaQuery.addEventListener?.("change", updatePointerType);
+    return () => mediaQuery.removeEventListener?.("change", updatePointerType);
+  }, []);
 
+  useEffect(() => {
     const fallAsleep = () => {
       if (sleepingRef.current) return;
       const image = catImage.current;
-      if (image?.naturalWidth) {
+      if (hasFinePointer && image?.naturalWidth) {
         try {
           const canvas = document.createElement("canvas");
           canvas.width = image.naturalWidth;
@@ -67,33 +71,33 @@ export default function CatCompanion() {
       });
     };
 
-    window.addEventListener("pointermove", followPointer, { passive: true });
+    if (hasFinePointer) {
+      window.addEventListener("pointermove", followPointer, { passive: true });
+    }
     window.addEventListener("pointerdown", followPointer, { passive: true });
     scheduleSleep();
 
-    const spinTimer = setInterval(() => {
+    const spinTimer = hasFinePointer ? setInterval(() => {
       if (!sleepingRef.current && Math.random() < 0.45) {
         setSpin(Math.random() < 0.5 ? "left" : "right");
         clearTimeout(spinResetTimer.current);
         spinResetTimer.current = setTimeout(() => setSpin(""), 800);
       }
-    }, 4300);
+    }, 4300) : null;
 
     return () => {
       clearTimeout(sleepTimer.current);
       clearTimeout(spinResetTimer.current);
-      clearInterval(spinTimer);
+      if (spinTimer) clearInterval(spinTimer);
       cancelAnimationFrame(frame.current);
       window.removeEventListener("pointermove", followPointer);
       window.removeEventListener("pointerdown", followPointer);
     };
   }, [hasFinePointer]);
 
-  if (!hasFinePointer) return null;
-
   return (
     <div
-      className={`cat-companion cat-companion--facing-${direction} ${sleeping ? "cat-companion--sleeping" : ""} ${spin ? `cat-companion--spin-${spin}` : ""}`}
+      className={`cat-companion ${hasFinePointer ? "cat-companion--desktop" : "cat-companion--touch"} cat-companion--facing-${direction} ${sleeping ? "cat-companion--sleeping" : ""} ${spin ? `cat-companion--spin-${spin}` : ""}`}
       style={position}
       aria-hidden="true"
     >

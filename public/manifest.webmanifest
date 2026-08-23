@@ -1,0 +1,9 @@
+{
+  "name": "Вішліст",
+  "short_name": "Вішліст",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090b11",
+  "theme_color": "#090b11",
+  "lang": "uk"
+}

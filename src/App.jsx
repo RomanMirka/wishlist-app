@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase, isSupabaseConfigured } from "./lib/supabase";
 import Taskbar from "./components/Taskbar";
 import WishlistCard from "./components/WishlistCard";
@@ -38,6 +38,24 @@ export default function App() {
   const [showNameGate, setShowNameGate] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isNight, setIsNight] = useState(() => isNightTime());
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [editingItem, setEditingItem] = useState(null);
+  const [pendingItemIds, setPendingItemIds] = useState(() => new Set());
+
+  const visibleItems = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase("uk-UA");
+    return items.filter((item) => {
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "available" ? !item.claimed_by : Boolean(item.claimed_by));
+      const searchable = [item.title, item.place, item.note, item.price]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase("uk-UA");
+      return matchesStatus && (!query || searchable.includes(query));
+    });
+  }, [items, search, statusFilter]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -82,7 +100,7 @@ export default function App() {
     if (error) {
       setErrorMsg(error.message);
     } else {
-      setItems(data);
+      setItems(data ?? []);
       setErrorMsg("");
     }
     setLoading(false);
@@ -117,7 +135,36 @@ export default function App() {
     upsertItem(data);
   }
 
+  async function handleUpdate(form) {
+    if (!editingItem) return;
+    const { data, error } = await supabase
+      .from("items")
+      .update({
+        title: form.title.trim(),
+        price: form.price.trim() || null,
+        place: form.place.trim() || null,
+        link: form.link.trim() || null,
+        image_url: form.image_url.trim() || null,
+        note: form.note.trim() || null,
+      })
+      .eq("id", editingItem.id)
+      .select()
+      .single();
+    if (error) throw error;
+    upsertItem(data);
+  }
+
+  function setItemPending(id, pending) {
+    setPendingItemIds((current) => {
+      const next = new Set(current);
+      pending ? next.add(id) : next.delete(id);
+      return next;
+    });
+  }
+
   async function handleClaim(item) {
+    if (pendingItemIds.has(item.id)) return;
+    setItemPending(item.id, true);
     const nextClaimedBy = item.claimed_by ? null : userName;
     const { data, error } = await supabase
       .from("items")
@@ -127,19 +174,25 @@ export default function App() {
       .single();
     if (error) {
       setErrorMsg(error.message);
+      setItemPending(item.id, false);
       return;
     }
     upsertItem(data);
+    setItemPending(item.id, false);
   }
 
   async function handleDelete(item) {
     if (!confirm(`Видалити «${item.title}» зі списку?`)) return;
+    if (pendingItemIds.has(item.id)) return;
+    setItemPending(item.id, true);
     const { error } = await supabase.from("items").delete().eq("id", item.id);
     if (error) {
       setErrorMsg(error.message);
+      setItemPending(item.id, false);
       return;
     }
     setItems((current) => current.filter(({ id }) => id !== item.id));
+    setItemPending(item.id, false);
   }
 
   function saveUserName(name) {
@@ -183,17 +236,6 @@ export default function App() {
         <div className="hero-section">
           <div className="hero-content">
             <div className="hero-brand">
-              <div className="site-logo" aria-label="Список бажань">
-                <svg
-                  className="site-logo-wish-icon"
-                  viewBox="0 0 32 32"
-                  aria-hidden="true"
-                >
-                  <path d="m20.8 3.5 1.7 5.3 5.3 1.7-5.3 1.7-1.7 5.3-1.7-5.3-5.3-1.7 5.3-1.7z" />
-                  <path d="m11.3 13.2 1.3 4 4 1.3-4 1.3-1.3 4-1.3-4-4-1.3 4-1.3z" />
-                  <path d="M4.5 27.5 17 22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                </svg>
-              </div>
               <div>
                 <h1 className="hero-title">
                   Список бажань
@@ -202,7 +244,7 @@ export default function App() {
             </div>
           </div>
           <p className="hero-description">
-            Додавай сюди те, що хочеш, щоб ми купили. Коли річ уже куплена —
+            Додавай сюди те, що хочеш, щоб ми придбали. Коли річ уже придбана —
             позначай її.
           </p>
           <div className="hero-counter">
@@ -217,7 +259,10 @@ export default function App() {
       <main className="app-content">
         {errorMsg && (
           <div className="error-message">
-            Помилка завантаження: {errorMsg}
+            <span>Помилка: {errorMsg}</span>
+            <button type="button" onClick={fetchItems} className="retry-button">
+              Спробувати знову
+            </button>
           </div>
         )}
 
@@ -233,17 +278,53 @@ export default function App() {
             </p>
           </div>
         ) : (
-          <div className="wishlist-grid">
-            {items.map((item) => (
-              <WishlistCard
-                key={item.id}
-                item={item}
-                currentUser={userName}
-                onClaim={handleClaim}
-                onDelete={handleDelete}
-              />
-            ))}
-          </div>
+          <>
+            <div className="list-controls" aria-label="Пошук і фільтри">
+              <label className="search-field">
+                <span className="sr-only">Шукати бажання</span>
+                <input
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Пошук у списку"
+                  className="form-input"
+                />
+              </label>
+              <div className="filter-buttons" role="group" aria-label="Статус товару">
+                {[
+                  ["all", "Усі"],
+                  ["available", "Не придбані"],
+                  ["claimed", "Придбані"],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    className={`filter-button ${statusFilter === value ? "filter-button--active" : ""}`}
+                    onClick={() => setStatusFilter(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {visibleItems.length === 0 ? (
+              <p className="no-results">Нічого не знайдено. Спробуйте інший запит або фільтр.</p>
+            ) : (
+              <div className="wishlist-grid">
+                {visibleItems.map((item) => (
+                  <WishlistCard
+                    key={item.id}
+                    item={item}
+                    currentUser={userName}
+                    pending={pendingItemIds.has(item.id)}
+                    onClaim={handleClaim}
+                    onDelete={handleDelete}
+                    onEdit={setEditingItem}
+                  />
+                ))}
+              </div>
+            )}
+          </>
         )}
       </main>
 
@@ -255,6 +336,15 @@ export default function App() {
 
       {showAdd && (
         <AddItemModal onClose={() => setShowAdd(false)} onSave={handleAdd} />
+      )}
+      {editingItem && (
+        <AddItemModal
+          initialItem={editingItem}
+          title="Редагувати товар"
+          submitLabel="Зберегти зміни"
+          onClose={() => setEditingItem(null)}
+          onSave={handleUpdate}
+        />
       )}
     </div>
   );

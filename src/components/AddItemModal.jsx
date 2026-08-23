@@ -1,13 +1,18 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const empty = { title: '', price: '', place: '', link: '', image_url: '', note: '' }
 
-export default function AddItemModal({ onClose, onSave }) {
-  const [form, setForm] = useState(empty)
+export default function AddItemModal({ onClose, onSave, initialItem, title = 'Новий товар', submitLabel = 'Додати до списку' }) {
+  const [form, setForm] = useState(initialItem ? toForm(initialItem) : empty)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   const update = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
+
+  useEffect(() => {
+    setForm(initialItem ? toForm(initialItem) : empty)
+    setError('')
+  }, [initialItem])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -31,8 +36,8 @@ export default function AddItemModal({ onClose, onSave }) {
     <div className="add-item-modal">
       <div className="add-item-dialog">
         <div className="dialog-titlebar">
-          <span className="dialog-title">Новий товар</span>
-          <button className="dialog-icon-button dialog-icon-button--close" onClick={onClose} title="Закрити">
+          <span className="dialog-title">{title}</span>
+          <button type="button" className="dialog-icon-button dialog-icon-button--close" onClick={onClose} title="Закрити" disabled={saving}>
             ✕
           </button>
         </div>
@@ -42,6 +47,7 @@ export default function AddItemModal({ onClose, onSave }) {
             <Field label="Назва товару *">
               <input
                 autoFocus
+                maxLength={160}
                 value={form.title}
                 onChange={update('title')}
                 placeholder="напр. Кавоварка Delonghi"
@@ -55,6 +61,7 @@ export default function AddItemModal({ onClose, onSave }) {
                   value={form.price}
                   onChange={update('price')}
                   inputMode="decimal"
+                  maxLength={60}
                   placeholder="напр. 2500"
                   className="form-input"
                 />
@@ -62,6 +69,7 @@ export default function AddItemModal({ onClose, onSave }) {
               <Field label="Де продається">
                 <input
                   value={form.place}
+                  maxLength={100}
                   onChange={update('place')}
                   placeholder="напр. Rozetka"
                   className="form-input"
@@ -71,6 +79,8 @@ export default function AddItemModal({ onClose, onSave }) {
 
             <Field label="Посилання на товар">
               <input
+                type="url"
+                maxLength={2_000}
                 value={form.link}
                 onChange={update('link')}
                 placeholder="https://..."
@@ -80,6 +90,8 @@ export default function AddItemModal({ onClose, onSave }) {
 
             <Field label="Посилання на фото">
               <input
+                type="url"
+                maxLength={2_000}
                 value={form.image_url}
                 onChange={update('image_url')}
                 placeholder="https://..."
@@ -92,6 +104,7 @@ export default function AddItemModal({ onClose, onSave }) {
                 value={form.note}
                 onChange={update('note')}
                 rows={2}
+                maxLength={1_000}
                 placeholder="колір, розмір, чому хочеш саме це..."
                 className="form-textarea"
               />
@@ -104,6 +117,7 @@ export default function AddItemModal({ onClose, onSave }) {
             <button
               type="button"
               onClick={onClose}
+              disabled={saving}
               className="secondary-button"
             >
               Скасувати
@@ -113,7 +127,7 @@ export default function AddItemModal({ onClose, onSave }) {
               disabled={saving}
               className="primary-button save-item-button"
             >
-              {saving ? 'Зберігаю…' : 'Додати до списку'}
+              {saving ? 'Зберігаю…' : submitLabel}
             </button>
           </div>
         </form>
@@ -121,6 +135,13 @@ export default function AddItemModal({ onClose, onSave }) {
 
     </div>
   )
+}
+
+function toForm(item) {
+  return {
+    title: item.title ?? '', price: item.price ?? '', place: item.place ?? '',
+    link: item.link ?? '', image_url: item.image_url ?? '', note: item.note ?? '',
+  }
 }
 
 function Field({ label, children }) {

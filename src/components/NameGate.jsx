@@ -20,6 +20,7 @@ export default function NameGate({ onSubmit, initial }) {
           </p>
           <input
             autoFocus
+            maxLength={60}
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Твоє ім'я"

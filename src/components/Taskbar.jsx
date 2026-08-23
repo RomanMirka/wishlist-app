@@ -4,6 +4,7 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
     <div className="toolbar-container">
       <div className="bottom-toolbar">
         <button
+          type="button"
           onClick={onAdd}
           className="primary-button add-item-button"
         >
@@ -13,6 +14,7 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
         </button>
 
         <button
+          type="button"
           onClick={onChangeUser}
           className="user-button"
           title="Змінити ім'я"
