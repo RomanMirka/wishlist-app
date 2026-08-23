@@ -49,7 +49,10 @@ textarea:focus-visible {
 .app-background {
   min-height: 100vh;
   min-height: 100dvh;
-  min-height: 100svh;
+  /* Use the largest viewport for the page background. On iOS this lets the
+     page continue beneath Safari's translucent browser chrome instead of
+     ending at the currently reduced visual viewport. */
+  min-height: 100lvh;
   position: relative;
   isolation: isolate;
   background:
@@ -459,7 +462,7 @@ textarea:focus-visible {
 /* Семантичні класи компонентів: без Tailwind-утиліт у JSX. */
 .app-background {
   min-height: 100dvh;
-  min-height: 100svh;
+  min-height: 100lvh;
   padding-top: max(0.75rem, env(safe-area-inset-top));
   padding-bottom: max(calc(5.5rem + env(safe-area-inset-bottom)), 6.25rem);
 }
@@ -468,7 +471,7 @@ textarea:focus-visible {
   body,
   #root,
   .app-background {
-    min-height: -webkit-fill-available;
+    min-height: 100lvh;
   }
   /* iOS Safari occasionally paints fixed backgrounds only inside the visual
      viewport. Keeping the gradient on the page itself lets it extend into
