@@ -14,6 +14,14 @@ export default function AddItemModal({ onClose, onSave, initialItem, title = 'Н
     setError('')
   }, [initialItem])
 
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape' && !saving) onClose()
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [onClose, saving])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!form.title.trim()) {
@@ -33,16 +41,16 @@ export default function AddItemModal({ onClose, onSave, initialItem, title = 'Н
   }
 
   return (
-    <div className="add-item-modal">
-      <div className="add-item-dialog">
+    <div className="add-item-modal" role="presentation">
+      <div className="add-item-dialog" role="dialog" aria-modal="true" aria-labelledby="item-dialog-title">
         <div className="dialog-titlebar">
-          <span className="dialog-title">{title}</span>
+          <span id="item-dialog-title" className="dialog-title">{title}</span>
           <button type="button" className="dialog-icon-button dialog-icon-button--close" onClick={onClose} title="Закрити" disabled={saving}>
             ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="add-item-form">
+        <form onSubmit={handleSubmit} className="add-item-form" aria-busy={saving}>
           <div className="form-fields">
             <Field label="Назва товару *">
               <input

@@ -9,10 +9,10 @@ export default function NameGate({ onSubmit, initial }) {
   };
 
   return (
-    <div className="name-gate">
-      <form onSubmit={submit} className="name-gate-dialog">
+    <div className="name-gate" role="presentation">
+      <form onSubmit={submit} className="name-gate-dialog" role="dialog" aria-modal="true" aria-labelledby="name-gate-title">
         <div className="dialog-titlebar">
-          <span className="dialog-title">Хто зайшов?</span>
+          <span id="name-gate-title" className="dialog-title">Хто зайшов?</span>
         </div>
         <div className="dialog-content">
           <p className="dialog-description">

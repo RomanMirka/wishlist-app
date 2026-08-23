@@ -66,7 +66,11 @@ export default function CatCompanion() {
         const xPadding = Math.min(64, window.innerWidth / 2);
         const yPadding = Math.min(64, window.innerHeight / 2);
         const x = Math.min(Math.max(clientX, xPadding), window.innerWidth - xPadding);
-        const y = Math.min(Math.max(clientY, yPadding), window.innerHeight - yPadding);
+        const verticalOffset = hasFinePointer ? 28 : 36;
+        const y = Math.min(
+          Math.max(clientY + verticalOffset, yPadding),
+          window.innerHeight - yPadding,
+        );
         setPosition({ left: `${x}px`, top: `${y}px` });
       });
     };

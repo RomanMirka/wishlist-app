@@ -29,9 +29,7 @@ const PARTICLES = [
 ];
 
 export default function App() {
-  const [userName, setUserName] = useState(() =>
-    localStorage.getItem(STORAGE_KEY),
-  );
+  const [userName, setUserName] = useState(getStoredName);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -92,18 +90,37 @@ export default function App() {
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("app-theme-night", isNight);
+    document.documentElement.classList.toggle("app-theme-day", !isNight);
+    document.body.classList.toggle("app-theme-night", isNight);
+    document.body.classList.toggle("app-theme-day", !isNight);
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      isNight ? "#090b11" : "#fcfdfd",
+    );
+
+    return () => {
+      document.documentElement.classList.remove("app-theme-day", "app-theme-night");
+      document.body.classList.remove("app-theme-day", "app-theme-night");
+    };
+  }, [isNight]);
+
   async function fetchItems() {
-    const { data, error } = await supabase
-      .from("items")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      setErrorMsg(error.message);
-    } else {
+    if (!supabase) return;
+    try {
+      const { data, error } = await supabase
+        .from("items")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
       setItems(data ?? []);
       setErrorMsg("");
+    } catch (error) {
+      setErrorMsg(getErrorMessage(error));
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   function upsertItem(nextItem) {
@@ -118,6 +135,7 @@ export default function App() {
   }
 
   async function handleAdd(form) {
+    if (!supabase) throw new Error("Supabase не налаштований");
     const { data, error } = await supabase
       .from("items")
       .insert({
@@ -132,11 +150,13 @@ export default function App() {
       .select()
       .single();
     if (error) throw error;
+    if (!data) throw new Error("Товар не вдалося зберегти");
     upsertItem(data);
   }
 
   async function handleUpdate(form) {
     if (!editingItem) return;
+    if (!supabase) throw new Error("Supabase не налаштований");
     const { data, error } = await supabase
       .from("items")
       .update({
@@ -151,6 +171,7 @@ export default function App() {
       .select()
       .single();
     if (error) throw error;
+    if (!data) throw new Error("Зміни не вдалося зберегти");
     upsertItem(data);
   }
 
@@ -165,38 +186,49 @@ export default function App() {
   async function handleClaim(item) {
     if (pendingItemIds.has(item.id)) return;
     setItemPending(item.id, true);
-    const nextClaimedBy = item.claimed_by ? null : userName;
-    const { data, error } = await supabase
-      .from("items")
-      .update({ claimed_by: nextClaimedBy })
-      .eq("id", item.id)
-      .select()
-      .single();
-    if (error) {
-      setErrorMsg(error.message);
+    try {
+      if (!supabase) throw new Error("Supabase не налаштований");
+      const nextClaimedBy = item.claimed_by ? null : userName;
+      const { data, error } = await supabase
+        .from("items")
+        .update({ claimed_by: nextClaimedBy })
+        .eq("id", item.id)
+        .select()
+        .single();
+      if (error) throw error;
+      if (!data) throw new Error("Не вдалося оновити статус товару");
+      upsertItem(data);
+      setErrorMsg("");
+    } catch (error) {
+      setErrorMsg(getErrorMessage(error));
+    } finally {
       setItemPending(item.id, false);
-      return;
     }
-    upsertItem(data);
-    setItemPending(item.id, false);
   }
 
   async function handleDelete(item) {
     if (!confirm(`Видалити «${item.title}» зі списку?`)) return;
     if (pendingItemIds.has(item.id)) return;
     setItemPending(item.id, true);
-    const { error } = await supabase.from("items").delete().eq("id", item.id);
-    if (error) {
-      setErrorMsg(error.message);
+    try {
+      if (!supabase) throw new Error("Supabase не налаштований");
+      const { error } = await supabase.from("items").delete().eq("id", item.id);
+      if (error) throw error;
+      setItems((current) => current.filter(({ id }) => id !== item.id));
+      setErrorMsg("");
+    } catch (error) {
+      setErrorMsg(getErrorMessage(error));
+    } finally {
       setItemPending(item.id, false);
-      return;
     }
-    setItems((current) => current.filter(({ id }) => id !== item.id));
-    setItemPending(item.id, false);
   }
 
   function saveUserName(name) {
-    localStorage.setItem(STORAGE_KEY, name);
+    try {
+      localStorage.setItem(STORAGE_KEY, name);
+    } catch {
+      // The app still works when private browsing blocks local storage.
+    }
     setUserName(name);
     setShowNameGate(false);
   }
@@ -353,6 +385,20 @@ export default function App() {
 function isNightTime() {
   const hour = new Date().getHours();
   return hour >= 20 || hour < 7;
+}
+
+function getStoredName() {
+  try {
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function getErrorMessage(error) {
+  return error instanceof Error && error.message
+    ? error.message
+    : "Сталася неочікувана помилка. Спробуйте ще раз.";
 }
 
 function SetupNeeded() {

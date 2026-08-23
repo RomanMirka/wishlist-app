@@ -19,6 +19,9 @@ export default function WishlistCard({ item, currentUser, pending, onClaim, onDe
           <button
             type="button"
             className="dialog-icon-button dialog-icon-button--claim"
+            aria-label={
+              isClaimed ? `Зняти позначку «придбано»: ${item.title}` : `Позначити як придбане: ${item.title}`
+            }
             title={
               isClaimed ? 'Зняти позначку «придбано»' : "Позначити як придбане"
             }
@@ -51,6 +54,7 @@ export default function WishlistCard({ item, currentUser, pending, onClaim, onDe
           <button
             type="button"
             className="dialog-icon-button dialog-icon-button--close"
+            aria-label={`Видалити: ${item.title}`}
             title="Видалити"
             onClick={() => onDelete(item)}
             disabled={pending}

@@ -18,6 +18,7 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
           onClick={onChangeUser}
           className="user-button"
           title="Змінити ім'я"
+          aria-label="Змінити ім'я"
         >
           <span className="user-avatar">
             {userName?.[0]?.toUpperCase() ?? "?"}
