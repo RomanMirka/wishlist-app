@@ -97,7 +97,7 @@ export default function App() {
     document.body.classList.toggle("app-theme-day", !isNight);
     document.querySelector('meta[name="theme-color"]')?.setAttribute(
       "content",
-      isNight ? "#090b11" : "#fcfdfd",
+      isNight ? "#090b11" : "#eef2f3",
     );
 
     return () => {

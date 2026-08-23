@@ -20,7 +20,10 @@ body,
 }
 html.app-theme-day,
 body.app-theme-day {
-  background: #fcfdfd;
+  /* Safari samples this root colour for its translucent bottom toolbar. A
+     slightly tinted shade is kept instead of pure white, which Safari may
+     replace with its own opaque toolbar colour. */
+  background: #eef2f3;
 }
 html.app-theme-night,
 body.app-theme-night {
