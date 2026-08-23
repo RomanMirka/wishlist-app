@@ -1147,8 +1147,16 @@ textarea:focus-visible {
 .theme-night.app-background {
   min-height: 100dvh;
   background:
-    radial-gradient(circle at 5% 0%, rgb(201 225 223 / 0.22), transparent 34rem),
-    radial-gradient(circle at 100% 100%, rgb(238 229 206 / 0.15), transparent 38rem),
+    radial-gradient(
+      circle at 5% 0%,
+      rgb(201 225 223 / 0.22),
+      transparent 34rem
+    ),
+    radial-gradient(
+      circle at 100% 100%,
+      rgb(238 229 206 / 0.15),
+      transparent 38rem
+    ),
     var(--page);
   background-attachment: fixed;
   transition:
@@ -1158,7 +1166,11 @@ textarea:focus-visible {
 .theme-night.app-background {
   background:
     radial-gradient(circle at 4% 0%, rgb(47 79 104 / 0.5), transparent 34rem),
-    radial-gradient(circle at 100% 100%, rgb(59 48 102 / 0.4), transparent 38rem),
+    radial-gradient(
+      circle at 100% 100%,
+      rgb(59 48 102 / 0.4),
+      transparent 38rem
+    ),
     var(--page);
 }
 .theme-day *,
@@ -1535,9 +1547,15 @@ textarea:focus-visible {
   border-color: #2563eb80;
   color: #1d4ed8;
 }
-.theme-night .priority-badge--very_wanted { color: #fca5a5; }
-.theme-night .priority-badge--want { color: #fcd34d; }
-.theme-night .priority-badge--nice_to_have { color: #93c5fd; }
+.theme-night .priority-badge--very_wanted {
+  color: #fca5a5;
+}
+.theme-night .priority-badge--want {
+  color: #fcd34d;
+}
+.theme-night .priority-badge--nice_to_have {
+  color: #93c5fd;
+}
 @media (max-width: 639px) {
   /* Blurred animated layers are expensive to paint on phones. The still
      gradient preserves the look while the few remaining particles keep it

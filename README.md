@@ -69,6 +69,23 @@ netlify deploy --prod
 ```
 (CLI запитає токен Supabase — додайте змінні середовища так само через `netlify env:set VITE_SUPABASE_URL "..."` і `netlify env:set VITE_SUPABASE_ANON_KEY "..."`, потім задеплойте ще раз.)
 
+## Cloudflare Pages
+
+Проєкт готовий до Cloudflare Pages. У Cloudflare відкрийте **Workers & Pages → Create application → Pages → Import an existing Git repository**, оберіть репозиторій і вкажіть:
+
+- **Build command:** `npm run build`
+- **Build output directory:** `dist`
+- **Production branch:** `main`
+
+У **Settings → Environment variables** додайте для Production значення з вашого локального `.env`:
+
+```
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
+
+Не додавайте `service_role` ключ Supabase. Після **Save and Deploy** Cloudflare покаже публічне посилання виду `https://назва-проєкту.pages.dev`. Файл `public/_headers` автоматично потрапляє у збірку й зберігає заголовки безпеки для Cloudflare.
+
 ---
 
 ## Як це працює
