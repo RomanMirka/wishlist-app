@@ -97,7 +97,7 @@ export default function App() {
     document.body.classList.toggle("app-theme-day", !isNight);
     document.querySelector('meta[name="theme-color"]')?.setAttribute(
       "content",
-      isNight ? "#090b11" : "#eef2f3",
+      isNight ? "#090b11" : "#fcfdfd",
     );
 
     return () => {
@@ -145,6 +145,7 @@ export default function App() {
         link: form.link.trim() || null,
         image_url: form.image_url.trim() || null,
         note: form.note.trim() || null,
+        priority: form.priority,
         added_by: userName,
       })
       .select()
@@ -166,6 +167,7 @@ export default function App() {
         link: form.link.trim() || null,
         image_url: form.image_url.trim() || null,
         note: form.note.trim() || null,
+        priority: form.priority,
       })
       .eq("id", editingItem.id)
       .select()

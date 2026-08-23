@@ -25,7 +25,7 @@ html.app-theme-day #root {
   /* Safari samples this root colour for its translucent bottom toolbar. A
      slightly tinted shade is kept instead of pure white, which Safari may
      replace with its own opaque toolbar colour. */
-  background: #eef2f3;
+  background: #fcfdfd;
 }
 html.app-theme-night,
 body.app-theme-night,
@@ -1373,6 +1373,7 @@ textarea:focus-visible {
 }
 .theme-day .form-input,
 .theme-day .form-textarea,
+.theme-day select.form-input,
 .theme-night .form-input,
 .theme-night .form-textarea {
   border: 1px solid var(--line);
@@ -1512,6 +1513,31 @@ textarea:focus-visible {
 .theme-night .cat-companion--sleeping .cat-companion__cat {
   filter: invert(1) saturate(0.72) brightness(0.9);
 }
+.priority-badge {
+  align-self: flex-start;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  background: var(--surface-strong);
+}
+.priority-badge--very_wanted {
+  border-color: #dc262680;
+  color: #b91c1c;
+}
+.priority-badge--want {
+  border-color: #d9770680;
+  color: #b45309;
+}
+.priority-badge--nice_to_have {
+  border-color: #2563eb80;
+  color: #1d4ed8;
+}
+.theme-night .priority-badge--very_wanted { color: #fca5a5; }
+.theme-night .priority-badge--want { color: #fcd34d; }
+.theme-night .priority-badge--nice_to_have { color: #93c5fd; }
 @media (max-width: 639px) {
   /* Blurred animated layers are expensive to paint on phones. The still
      gradient preserves the look while the few remaining particles keep it

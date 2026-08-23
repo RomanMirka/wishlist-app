@@ -6,6 +6,7 @@ export default function WishlistCard({ item, currentUser, pending, onClaim, onDe
   const productUrl = toSafeHttpUrl(item.link);
   const isClaimed = Boolean(item.claimed_by);
   const claimedByMe = item.claimed_by === currentUser;
+  const priority = getPriority(item.priority);
 
   useEffect(() => setImageFailed(false), [imageUrl]);
 
@@ -86,6 +87,9 @@ export default function WishlistCard({ item, currentUser, pending, onClaim, onDe
       </div>
 
       <div className="wishlist-card-content">
+        <span className={`priority-badge priority-badge--${priority.value}`}>
+          {priority.label}
+        </span>
         {item.note && <p className="item-note">{item.note}</p>}
 
         <div className="item-links">
@@ -134,4 +138,13 @@ function toSafeHttpUrl(value) {
   } catch {
     return null;
   }
+}
+
+function getPriority(value) {
+  const priorities = {
+    very_wanted: { value: "very_wanted", label: "Дуже хочу" },
+    want: { value: "want", label: "Хочу" },
+    nice_to_have: { value: "nice_to_have", label: "Було б непогано" },
+  };
+  return priorities[value] ?? priorities.want;
 }

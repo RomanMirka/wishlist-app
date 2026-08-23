@@ -8,10 +8,13 @@ create table if not exists public.items (
   link text,
   image_url text,
   note text,
+  priority text not null default 'want' check (priority in ('very_wanted', 'want', 'nice_to_have')),
   added_by text not null default 'Хтось',
   claimed_by text,
   created_at timestamptz not null default now()
 );
+
+-- Для уже існуючої таблиці виконайте також міграцію з теки migrations.
 
 -- Швидке завантаження найновіших товарів, навіть коли список виросте.
 create index if not exists items_created_at_desc_idx

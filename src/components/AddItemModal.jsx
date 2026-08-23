@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-const empty = { title: '', price: '', place: '', link: '', image_url: '', note: '' }
+const empty = { title: '', price: '', place: '', link: '', image_url: '', note: '', priority: 'want' }
 
 export default function AddItemModal({ onClose, onSave, initialItem, title = 'Новий товар', submitLabel = 'Додати до списку' }) {
   const [form, setForm] = useState(initialItem ? toForm(initialItem) : empty)
@@ -85,6 +85,18 @@ export default function AddItemModal({ onClose, onSave, initialItem, title = 'Н
               </Field>
             </div>
 
+            <Field label="Пріоритет">
+              <select
+                value={form.priority}
+                onChange={update('priority')}
+                className="form-input"
+              >
+                <option value="very_wanted">Дуже хочу</option>
+                <option value="want">Хочу</option>
+                <option value="nice_to_have">Було б непогано</option>
+              </select>
+            </Field>
+
             <Field label="Посилання на товар">
               <input
                 type="url"
@@ -149,6 +161,7 @@ function toForm(item) {
   return {
     title: item.title ?? '', price: item.price ?? '', place: item.place ?? '',
     link: item.link ?? '', image_url: item.image_url ?? '', note: item.note ?? '',
+    priority: item.priority ?? 'want',
   }
 }
 
