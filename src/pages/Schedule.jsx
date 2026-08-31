@@ -458,14 +458,14 @@ export default function Schedule() {
             className={`filter-button ${userFilter === "mine" ? "filter-button--active" : ""}`}
             onClick={() => setUserFilter("mine")}
           >
-            Тільки мої
+            Мої
           </button>
           <button
             type="button"
             className={`filter-button ${userFilter === "partner" ? "filter-button--active" : ""}`}
             onClick={() => setUserFilter("partner")}
           >
-            Тільки її
+            Не мої
           </button>
         </div>
 
