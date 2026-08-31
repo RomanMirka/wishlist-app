@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase, isSupabaseConfigured } from "./lib/supabase";
-import Taskbar from "./components/Taskbar";
-import WishlistCard from "./components/WishlistCard";
-import AddItemModal from "./components/AddItemModal";
-import NameGate from "./components/NameGate";
-import CatCompanion from "./components/CatCompanion";
+import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import Taskbar from "../components/Taskbar";
+import WishlistCard from "../components/WishlistCard";
+import AddItemModal from "../components/AddItemModal";
+import NameGate from "../components/NameGate";
+import CatCompanion from "../components/CatCompanion";
 
 const STORAGE_KEY = "wishlist_user_name";
 const PARTICLES = [
@@ -28,7 +28,7 @@ const PARTICLES = [
   ["31%", "6%", 2, -11, 16, 16, -30],
 ];
 
-export default function App() {
+export default function Wishlist() {
   const [userName, setUserName] = useState(getStoredName);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,9 @@ export default function App() {
     return items.filter((item) => {
       const matchesStatus =
         statusFilter === "all" ||
-        (statusFilter === "available" ? !item.claimed_by : Boolean(item.claimed_by));
+        (statusFilter === "available"
+          ? !item.claimed_by
+          : Boolean(item.claimed_by));
       const searchable = [item.title, item.place, item.note, item.price]
         .filter(Boolean)
         .join(" ")
@@ -95,13 +97,15 @@ export default function App() {
     document.documentElement.classList.toggle("app-theme-day", !isNight);
     document.body.classList.toggle("app-theme-night", isNight);
     document.body.classList.toggle("app-theme-day", !isNight);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute(
-      "content",
-      isNight ? "#090b11" : "#fcfdfd",
-    );
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", isNight ? "#090b11" : "#fcfdfd");
 
     return () => {
-      document.documentElement.classList.remove("app-theme-day", "app-theme-night");
+      document.documentElement.classList.remove(
+        "app-theme-day",
+        "app-theme-night",
+      );
       document.body.classList.remove("app-theme-day", "app-theme-night");
     };
   }, [isNight]);
@@ -271,9 +275,7 @@ export default function App() {
           <div className="hero-content">
             <div className="hero-brand">
               <div>
-                <h1 className="hero-title">
-                  Список бажань
-                </h1>
+                <h1 className="hero-title">Список бажань</h1>
               </div>
             </div>
           </div>
@@ -301,15 +303,11 @@ export default function App() {
         )}
 
         {loading ? (
-          <div className="loading-state">
-            Завантаження списку…
-          </div>
+          <div className="loading-state">Завантаження списку…</div>
         ) : items.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-icon">❋</div>
-            <p className="empty-state-title">
-              Додайте перше бажання
-            </p>
+            <p className="empty-state-title">Додайте перше бажання</p>
           </div>
         ) : (
           <>
@@ -324,7 +322,11 @@ export default function App() {
                   className="form-input"
                 />
               </label>
-              <div className="filter-buttons" role="group" aria-label="Статус товару">
+              <div
+                className="filter-buttons"
+                role="group"
+                aria-label="Статус товару"
+              >
                 {[
                   ["all", "Усі"],
                   ["available", "Не придбані"],
@@ -342,7 +344,9 @@ export default function App() {
               </div>
             </div>
             {visibleItems.length === 0 ? (
-              <p className="no-results">Нічого не знайдено. Спробуйте інший запит або фільтр.</p>
+              <p className="no-results">
+                Нічого не знайдено. Спробуйте інший запит або фільтр.
+              </p>
             ) : (
               <div className="wishlist-grid">
                 {visibleItems.map((item) => (
@@ -408,29 +412,15 @@ function SetupNeeded() {
     <div className="setup-screen">
       <div className="setup-panel">
         <div className="dialog-titlebar">
-          <span className="dialog-title">
-            Потрібне налаштування
-          </span>
+          <span className="dialog-title">Потрібне налаштування</span>
         </div>
         <div className="setup-content">
-          <p className="setup-heading">
-            Ще один крок перед запуском
-          </p>
+          <p className="setup-heading">Ще один крок перед запуском</p>
           <p>
-            Створіть файл{" "}
-            <code className="inline-code">
-              .env
-            </code>{" "}
-            у корені проєкту на основі{" "}
-            <code className="inline-code">
-              .env.example
-            </code>{" "}
+            Створіть файл <code className="inline-code">.env</code> у корені
+            проєкту на основі <code className="inline-code">.env.example</code>{" "}
             і додайте туди дані вашого проєкту Supabase. Всі інструкції — у
-            файлі{" "}
-            <code className="inline-code">
-              README.md
-            </code>
-            .
+            файлі <code className="inline-code">README.md</code>.
           </p>
         </div>
       </div>

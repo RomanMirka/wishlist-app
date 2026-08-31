@@ -1,0 +1,96 @@
+import { useEffect, useState } from "react";
+
+// Bump this key (e.g. to "_v2") whenever you want the notice to reappear
+// after a future update.
+const UPDATE_SEEN_KEY = "schedule_update_seen_v1";
+
+export default function UpdateNotice() {
+  const [visible, setVisible] = useState(false);
+
+  // The theme variables (--ink, --accent, --surface, ...) live under the
+  // .theme-day / .theme-night classes. Pages apply that class on their own
+  // wrapper, but this component renders at the app root (outside any page),
+  // so it needs to pick and apply the theme itself to look right anywhere.
+  const [isNight] = useState(() => {
+    const hour = new Date().getHours();
+    return hour >= 20 || hour < 7;
+  });
+
+  useEffect(() => {
+    try {
+      if (!localStorage.getItem(UPDATE_SEEN_KEY)) {
+        setVisible(true);
+      }
+    } catch {
+      // Якщо localStorage недоступний — просто не показуємо, щоб не набридати.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return undefined;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") dismiss();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [visible]);
+
+  function dismiss() {
+    try {
+      localStorage.setItem(UPDATE_SEEN_KEY, "1");
+    } catch {}
+    setVisible(false);
+  }
+
+  if (!visible) return null;
+
+  return (
+    <div
+      className={`name-gate ${isNight ? "theme-night" : "theme-day"}`}
+      role="presentation"
+    >
+      <div
+        className="name-gate-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="update-notice-title"
+      >
+        <div className="dialog-titlebar">
+          <span id="update-notice-title" className="dialog-title">
+            Що нового ✨
+          </span>
+          <button
+            type="button"
+            className="dialog-icon-button dialog-icon-button--close"
+            onClick={dismiss}
+            title="Закрити"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="dialog-content">
+          <p className="dialog-description">
+            Розклад тепер зберігається в хмарі: подія, яку додає одне з вас,
+            одразу з'являється й на іншому телефоні — оновлювати сторінку не
+            треба.
+          </p>
+
+          <ul className="update-notice-list">
+            <li>Картки пар отримали кольорові позначки типу заняття</li>
+            <li>Пара, яка триває просто зараз, тепер підсвічується</li>
+            <li>Перемикач між вішлістом і розкладом став компактнішим</li>
+          </ul>
+
+          <button
+            type="button"
+            className="primary-button name-gate-button"
+            onClick={dismiss}
+          >
+            Зрозуміло
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

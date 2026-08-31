@@ -1,4 +1,9 @@
+import { useLocation, useNavigate } from "react-router-dom";
+
 export default function Taskbar({ userName, onChangeUser, onAdd }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isSchedule = location.pathname === "/schedule";
 
   return (
     <div className="toolbar-container">
@@ -9,9 +14,42 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
           className="primary-button add-item-button"
         >
           <span className="add-item-icon">＋</span>
-          <span className="add-item-label">Додати річ</span>
-          <span className="add-item-label-mobile">Додати</span>
+          <span className="add-item-label">
+            {isSchedule ? "Додати подію" : "Додати річ"}
+          </span>
+          <span className="add-item-label-mobile">
+            {isSchedule ? "Подія" : "Додати"}
+          </span>
         </button>
+
+        <div className="page-switch" role="tablist" aria-label="Розділ">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={!isSchedule}
+            aria-label="Вішліст"
+            title="Вішліст"
+            className={`page-switch__tab ${
+              !isSchedule ? "page-switch__tab--active" : ""
+            }`}
+            onClick={() => navigate("/wishlist")}
+          >
+            📋
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={isSchedule}
+            aria-label="Розклад"
+            title="Розклад"
+            className={`page-switch__tab ${
+              isSchedule ? "page-switch__tab--active" : ""
+            }`}
+            onClick={() => navigate("/schedule")}
+          >
+            📅
+          </button>
+        </div>
 
         <button
           type="button"
@@ -23,9 +61,7 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
           <span className="user-avatar">
             {userName?.[0]?.toUpperCase() ?? "?"}
           </span>
-          <span className="user-name">
-            {userName}
-          </span>
+          <span className="user-name">{userName}</span>
         </button>
       </div>
     </div>
