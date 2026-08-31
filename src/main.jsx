@@ -11,6 +11,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <UpdateNotice />
       <Routes>
+        <Route path="/" element={<Wishlist />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/schedule" element={<Schedule />} />
       </Routes>
