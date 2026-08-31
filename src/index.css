@@ -819,6 +819,7 @@ select:focus-visible {
   width: 100%;
   max-width: 16.5rem;
   padding: 0.5rem 0.625rem;
+  background: color-mix(in srgb, var(--surface) 12%, transparent);
 }
 
 .add-item-button {
