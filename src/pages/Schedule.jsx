@@ -9,9 +9,11 @@ import { isSupabaseConfigured } from "../lib/supabase";
 import {
   fetchScheduleItems,
   insertScheduleItem,
+  updateScheduleItem,
   deleteScheduleItem,
   subscribeToScheduleChanges,
 } from "../lib/scheduleService";
+import { getUserThemeClass } from "../lib/userTheme";
 
 const STORAGE_KEY = "wishlist_user_name";
 const SCHEDULE_STORAGE_KEY = "user_schedule_events";
@@ -43,6 +45,7 @@ export default function Schedule() {
 
   const [userFilter, setUserFilter] = useState("all");
   const [showAddSchedule, setShowAddSchedule] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
   const [showNameGate, setShowNameGate] = useState(false);
   const [isNight, setIsNight] = useState(() => isNightTime());
   const [currentTime, setCurrentTime] = useState(() => getCurrentTimeString());
@@ -97,6 +100,11 @@ export default function Schedule() {
       onDelete: (id) => {
         setScheduleItems((prev) => prev.filter((item) => item.id !== id));
       },
+      onUpdate: (item) => {
+        setScheduleItems((prev) =>
+          prev.map((existing) => (existing.id === item.id ? item : existing)),
+        );
+      },
     });
 
     return unsubscribe;
@@ -148,6 +156,24 @@ export default function Schedule() {
     const saved = await insertScheduleItem(newItem);
     setScheduleItems((prev) =>
       prev.some((item) => item.id === saved.id) ? prev : [...prev, saved],
+    );
+  }
+
+  async function handleUpdateSchedule(form) {
+    if (!editingItem) return;
+
+    if (!isSupabaseConfigured) {
+      setScheduleItems((prev) =>
+        prev.map((item) =>
+          item.id === editingItem.id ? { ...form, id: editingItem.id } : item,
+        ),
+      );
+      return;
+    }
+
+    const updated = await updateScheduleItem(editingItem.id, form);
+    setScheduleItems((prev) =>
+      prev.map((item) => (item.id === updated.id ? updated : item)),
     );
   }
 
@@ -307,7 +333,9 @@ export default function Schedule() {
   }, [scheduleItems, activeDay, userFilter, effectiveUser]);
 
   return (
-    <div className={`app-background ${isNight ? "theme-night" : "theme-day"}`}>
+    <div
+      className={`app-background ${isNight ? "theme-night" : "theme-day"} ${getUserThemeClass(userName)}`}
+    >
       <CatCompanion />
 
       {!userName && <NameGate onSubmit={saveUserName} />}
@@ -440,6 +468,8 @@ export default function Schedule() {
 
         <div
           className="filter-buttons"
+          role="group"
+          aria-label="Власник події"
           style={{
             marginBottom: "1rem",
             width: "100%",
@@ -449,6 +479,7 @@ export default function Schedule() {
           <button
             type="button"
             className={`filter-button ${userFilter === "all" ? "filter-button--active" : ""}`}
+            aria-pressed={userFilter === "all"}
             onClick={() => setUserFilter("all")}
           >
             Усі
@@ -456,16 +487,18 @@ export default function Schedule() {
           <button
             type="button"
             className={`filter-button ${userFilter === "mine" ? "filter-button--active" : ""}`}
+            aria-pressed={userFilter === "mine"}
             onClick={() => setUserFilter("mine")}
           >
-            Мої
+            Тільки мої
           </button>
           <button
             type="button"
             className={`filter-button ${userFilter === "partner" ? "filter-button--active" : ""}`}
+            aria-pressed={userFilter === "partner"}
             onClick={() => setUserFilter("partner")}
           >
-            Не мої
+            Інших
           </button>
         </div>
 
@@ -521,10 +554,10 @@ export default function Schedule() {
                         <ScheduleCard
                           key={item.id}
                           item={item}
-                          currentUser={effectiveUser}
                           currentTime={currentTime}
                           isCompact={isParallel}
                           onDelete={handleDeleteSchedule}
+                          onEdit={setEditingItem}
                         />
                       ))}
                     </div>
@@ -543,10 +576,10 @@ export default function Schedule() {
                         <ScheduleCard
                           key={item.id}
                           item={item}
-                          currentUser={effectiveUser}
                           currentTime={currentTime}
                           isCompact={isParallel}
                           onDelete={handleDeleteSchedule}
+                          onEdit={setEditingItem}
                         />
                       ))}
                     </div>
@@ -570,6 +603,18 @@ export default function Schedule() {
           defaultDay={activeDay}
           onClose={() => setShowAddSchedule(false)}
           onSave={handleSaveSchedule}
+        />
+      )}
+
+      {editingItem && (
+        <AddScheduleModal
+          currentUser={editingItem.owner}
+          defaultDay={editingItem.day}
+          initialItem={editingItem}
+          title="Редагувати подію"
+          submitLabel="Зберегти зміни"
+          onClose={() => setEditingItem(null)}
+          onSave={handleUpdateSchedule}
         />
       )}
     </div>

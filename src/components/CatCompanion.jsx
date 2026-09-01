@@ -13,6 +13,8 @@ export default function CatCompanion() {
   const lastPointerX = useRef(null);
   const sleepTimer = useRef(null);
   const frame = useRef(null);
+  const latestPointer = useRef(null);
+  const renderedPosition = useRef(null);
   const spinResetTimer = useRef(null);
 
   useEffect(() => {
@@ -56,22 +58,38 @@ export default function CatCompanion() {
         setDirection(clientX > lastPointerX.current ? "right" : "left");
       }
       lastPointerX.current = clientX;
-      sleepingRef.current = false;
-      setSleeping(false);
-      setFrozenFrame(null);
+      latestPointer.current = { clientX, clientY };
+      if (sleepingRef.current) {
+        sleepingRef.current = false;
+        setSleeping(false);
+        setFrozenFrame(null);
+      }
       scheduleSleep();
 
-      cancelAnimationFrame(frame.current);
+      if (frame.current) return;
       frame.current = requestAnimationFrame(() => {
+        frame.current = null;
+        const pointer = latestPointer.current;
+        if (!pointer) return;
         const xPadding = Math.min(64, window.innerWidth / 2);
         const yPadding = Math.min(64, window.innerHeight / 2);
-        const x = Math.min(Math.max(clientX, xPadding), window.innerWidth - xPadding);
+        const x = Math.min(
+          Math.max(pointer.clientX, xPadding),
+          window.innerWidth - xPadding,
+        );
         const verticalOffset = hasFinePointer ? 28 : 36;
         const y = Math.min(
-          Math.max(clientY + verticalOffset, yPadding),
+          Math.max(pointer.clientY + verticalOffset, yPadding),
           window.innerHeight - yPadding,
         );
-        setPosition({ left: `${x}px`, top: `${y}px` });
+        const nextPosition = { left: `${x}px`, top: `${y}px` };
+        if (
+          renderedPosition.current?.left !== nextPosition.left ||
+          renderedPosition.current?.top !== nextPosition.top
+        ) {
+          renderedPosition.current = nextPosition;
+          setPosition(nextPosition);
+        }
       });
     };
 

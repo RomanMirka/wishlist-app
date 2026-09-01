@@ -5,6 +5,7 @@ import WishlistCard from "../components/WishlistCard";
 import AddItemModal from "../components/AddItemModal";
 import NameGate from "../components/NameGate";
 import CatCompanion from "../components/CatCompanion";
+import { getUserThemeClass } from "../lib/userTheme";
 
 const STORAGE_KEY = "wishlist_user_name";
 const PARTICLES = [
@@ -41,21 +42,31 @@ export default function Wishlist() {
   const [editingItem, setEditingItem] = useState(null);
   const [pendingItemIds, setPendingItemIds] = useState(() => new Set());
 
+  const itemSearchIndex = useMemo(
+    () =>
+      items.map((item) => ({
+        item,
+        searchable: [item.title, item.place, item.note, item.price]
+          .filter(Boolean)
+          .join(" ")
+          .toLocaleLowerCase("uk-UA"),
+      })),
+    [items],
+  );
+
   const visibleItems = useMemo(() => {
     const query = search.trim().toLocaleLowerCase("uk-UA");
-    return items.filter((item) => {
+    return itemSearchIndex
+      .filter(({ item, searchable }) => {
       const matchesStatus =
         statusFilter === "all" ||
         (statusFilter === "available"
           ? !item.claimed_by
           : Boolean(item.claimed_by));
-      const searchable = [item.title, item.place, item.note, item.price]
-        .filter(Boolean)
-        .join(" ")
-        .toLocaleLowerCase("uk-UA");
       return matchesStatus && (!query || searchable.includes(query));
-    });
-  }, [items, search, statusFilter]);
+      })
+      .map(({ item }) => item);
+  }, [itemSearchIndex, search, statusFilter]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -244,7 +255,9 @@ export default function Wishlist() {
   }
 
   return (
-    <div className={`app-background ${isNight ? "theme-night" : "theme-day"}`}>
+    <div
+      className={`app-background ${isNight ? "theme-night" : "theme-day"} ${getUserThemeClass(userName)}`}
+    >
       <div className="ambient-motion" aria-hidden="true" />
       <div className="ambient-particles" aria-hidden="true">
         {PARTICLES.map(([left, top, size, delay, duration, x, y], index) => (
@@ -322,11 +335,7 @@ export default function Wishlist() {
                   className="form-input"
                 />
               </label>
-              <div
-                className="filter-buttons"
-                role="group"
-                aria-label="Статус товару"
-              >
+              <div className="filter-buttons" role="group" aria-label="Статус товару">
                 {[
                   ["all", "Усі"],
                   ["available", "Не придбані"],
@@ -336,6 +345,7 @@ export default function Wishlist() {
                     key={value}
                     type="button"
                     className={`filter-button ${statusFilter === value ? "filter-button--active" : ""}`}
+                    aria-pressed={statusFilter === value}
                     onClick={() => setStatusFilter(value)}
                   >
                     {label}

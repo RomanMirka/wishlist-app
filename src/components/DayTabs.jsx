@@ -9,13 +9,12 @@ const DAYS = [
 
 export default function DayTabs({ activeDay, onSelectDay, eventDays }) {
   return (
-    <div className="filter-buttons" role="tablist">
+    <div className="filter-buttons" role="group" aria-label="День тижня">
       {DAYS.map((day) => (
         <button
           key={day.id}
           type="button"
-          role="tab"
-          aria-selected={activeDay === day.id}
+          aria-pressed={activeDay === day.id}
           className={`filter-button ${
             activeDay === day.id ? "filter-button--active" : ""
           }`}

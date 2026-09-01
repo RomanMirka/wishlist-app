@@ -1,24 +1,26 @@
+import { getDisplayName, getOwnerTheme } from "../lib/userTheme";
+
 const TYPE_LABELS = {
   lecture: "Лекція",
   practice: "Практика",
+  remote: "Дистанційне",
   other: "Інше",
 };
 
 const TYPE_COLOR_VARS = {
   lecture: "var(--type-lecture)",
   practice: "var(--type-practice)",
+  remote: "var(--type-remote)",
   other: "var(--type-other)",
 };
 
 export default function ScheduleCard({
   item,
-  currentUser,
   currentTime,
   isCompact,
   onDelete,
+  onEdit,
 }) {
-  const isMine = item.owner === currentUser;
-
   const nowMin = parseTimeToMin(currentTime);
   const startMin = parseTimeToMin(item.startTime);
   let endMin = parseTimeToMin(item.endTime);
@@ -28,14 +30,25 @@ export default function ScheduleCard({
   const adjNow = nowMin < startMin && endMin > 1440 ? nowMin + 1440 : nowMin;
   const isHappeningNow = adjNow >= startMin && adjNow <= endMin;
 
-  // Динамічна висота картки (1 хв = 2.5px, мінімум 85px)
-  const durationMinutes = Math.max(15, endMin - startMin);
+  const rawDurationMinutes = endMin - startMin;
+  const durationLabel = formatDuration(rawDurationMinutes);
+
+  // Легка часова ієрархія без великих порожніх блоків у звичайному списку.
+  const durationMinutes = Math.max(15, rawDurationMinutes);
   const calculatedMinHeight = Math.min(
-    350,
-    Math.max(85, Math.round(durationMinutes * 2.5)),
+    isCompact ? 150 : 170,
+    Math.max(isCompact ? 112 : 124, Math.round(durationMinutes * 0.75)),
   );
 
   const typeColor = TYPE_COLOR_VARS[item.type] || TYPE_COLOR_VARS.other;
+  const owner = getDisplayName(item.owner);
+  const ownerTheme = getOwnerTheme(item.owner);
+
+  function handleDeleteClick() {
+    if (confirm(`Видалити «${item.title}» з розкладу?`)) {
+      onDelete(item.id);
+    }
+  }
 
   return (
     <article
@@ -45,6 +58,8 @@ export default function ScheduleCard({
       style={{
         minHeight: `${calculatedMinHeight}px`,
         "--schedule-type-color": typeColor,
+        "--schedule-owner-color": ownerTheme.color,
+        "--schedule-owner-ink": ownerTheme.ink,
       }}
     >
       <div className="schedule-card__stripe" aria-hidden="true" />
@@ -58,35 +73,51 @@ export default function ScheduleCard({
             {item.title}
           </h3>
 
-          <button
-            type="button"
-            className="dialog-icon-button dialog-icon-button--close"
-            style={
-              isCompact
-                ? { width: "1.35rem", height: "1.35rem", fontSize: "9px" }
-                : {}
-            }
-            onClick={() => onDelete(item.id)}
-            title="Видалити"
-            aria-label={`Видалити ${item.title}`}
-          >
-            ✕
-          </button>
+          <div className="schedule-card__header-actions">
+            <button
+              type="button"
+              className="dialog-icon-button"
+              onClick={() => onEdit(item)}
+              title="Редагувати"
+              aria-label={`Редагувати ${item.title}`}
+            >
+              <svg
+                className="action-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="m4 16.5-.7 4.2 4.2-.7L19 8.5 15.5 5z" />
+                <path d="m13.8 6.7 3.5 3.5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="dialog-icon-button dialog-icon-button--close"
+              onClick={() => handleDeleteClick()}
+              title="Видалити"
+              aria-label={`Видалити ${item.title}`}
+            >
+              <svg
+                className="action-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path d="m5 5 14 14M19 5 5 19" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div className="schedule-card__content">
           <div className="schedule-card__time-row">
-            <span className="schedule-card__time">
-              {item.startTime}–{item.endTime}
+            <span className="schedule-card__time-group">
+              <span className="schedule-card__time">
+                {item.startTime}–{item.endTime}
+              </span>
+              <span className="schedule-card__duration">{durationLabel}</span>
             </span>
-            <span
-              className={`schedule-owner-badge ${
-                isMine
-                  ? "schedule-owner-badge--mine"
-                  : "schedule-owner-badge--partner"
-              }`}
-            >
-              {isMine ? "Я" : "Вона"}
+            <span className="schedule-owner-badge" title={`Створив/-ла: ${owner}`}>
+              {owner}
             </span>
           </div>
 
@@ -111,4 +142,13 @@ function parseTimeToMin(timeStr) {
   if (!timeStr) return 0;
   const [h, m] = timeStr.split(":").map(Number);
   return (h || 0) * 60 + (m || 0);
+}
+
+function formatDuration(totalMinutes) {
+  const minutes = Math.max(0, Math.round(totalMinutes));
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours === 0) return `${mins}хв`;
+  if (mins === 0) return `${hours}год`;
+  return `${hours}год ${mins}хв`;
 }

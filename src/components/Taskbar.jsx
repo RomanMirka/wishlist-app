@@ -22,11 +22,10 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
           </span>
         </button>
 
-        <div className="page-switch" role="tablist" aria-label="Розділ">
+        <nav className="page-switch" aria-label="Розділ">
           <button
             type="button"
-            role="tab"
-            aria-selected={!isSchedule}
+            aria-current={!isSchedule ? "page" : undefined}
             aria-label="Вішліст"
             title="Вішліст"
             className={`page-switch__tab ${
@@ -38,8 +37,7 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
           </button>
           <button
             type="button"
-            role="tab"
-            aria-selected={isSchedule}
+            aria-current={isSchedule ? "page" : undefined}
             aria-label="Розклад"
             title="Розклад"
             className={`page-switch__tab ${
@@ -49,7 +47,7 @@ export default function Taskbar({ userName, onChangeUser, onAdd }) {
           >
             📅
           </button>
-        </div>
+        </nav>
 
         <button
           type="button"

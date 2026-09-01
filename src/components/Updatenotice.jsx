@@ -1,11 +1,19 @@
 import { useEffect, useState } from "react";
+import { getUserThemeClass } from "../lib/userTheme";
 
 // Bump this key (e.g. to "_v2") whenever you want the notice to reappear
 // after a future update.
-const UPDATE_SEEN_KEY = "schedule_update_seen_v1";
+const UPDATE_SEEN_KEY = "schedule_update_seen_v2";
 
 export default function UpdateNotice() {
   const [visible, setVisible] = useState(false);
+  const [userThemeClass] = useState(() => {
+    try {
+      return getUserThemeClass(localStorage.getItem("wishlist_user_name"));
+    } catch {
+      return "";
+    }
+  });
 
   // The theme variables (--ink, --accent, --surface, ...) live under the
   // .theme-day / .theme-night classes. Pages apply that class on their own
@@ -46,7 +54,7 @@ export default function UpdateNotice() {
 
   return (
     <div
-      className={`name-gate ${isNight ? "theme-night" : "theme-day"}`}
+      className={`name-gate ${isNight ? "theme-night" : "theme-day"} ${userThemeClass}`}
       role="presentation"
     >
       <div
@@ -57,7 +65,7 @@ export default function UpdateNotice() {
       >
         <div className="dialog-titlebar">
           <span id="update-notice-title" className="dialog-title">
-            Що нового ✨
+            Що нового
           </span>
           <button
             type="button"
@@ -71,8 +79,8 @@ export default function UpdateNotice() {
 
         <div className="dialog-content">
           <p className="dialog-description">
-            Додано новий розділ - <strong>Розклад</strong>. Тепер можна вести
-            спільний тижневий графік пар прямо в застосунку.
+            <strong>Розклад: </strong>тепер зручніше редагувати і дизайн
+            трооошки краще.
           </p>
 
           <button

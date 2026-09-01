@@ -3,6 +3,17 @@ import { useEffect, useState } from "react";
 const MAX_TITLE_LENGTH = 25;
 const MAX_LOCATION_LENGTH = 20;
 
+function toForm(item) {
+  return {
+    title: item.title ?? "",
+    day: item.day ?? "monday",
+    startTime: item.startTime ?? "08:30",
+    endTime: item.endTime ?? "10:05",
+    location: item.location ?? "",
+    type: item.type ?? "lecture",
+  };
+}
+
 const INITIAL_STATE = {
   title: "",
   day: "monday",
@@ -17,17 +28,30 @@ export default function AddScheduleModal({
   onSave,
   currentUser,
   defaultDay,
+  initialItem,
+  title = "Нова подія розкладу",
+  submitLabel = "Зберегти",
 }) {
-  const [form, setForm] = useState(() => ({
-    ...INITIAL_STATE,
-    day: defaultDay || "monday",
-  }));
+  const [form, setForm] = useState(() =>
+    initialItem
+      ? toForm(initialItem)
+      : { ...INITIAL_STATE, day: defaultDay || "monday" },
+  );
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   const updateField = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
+
+  useEffect(() => {
+    setForm(
+      initialItem
+        ? toForm(initialItem)
+        : { ...INITIAL_STATE, day: defaultDay || "monday" },
+    );
+    setError("");
+  }, [initialItem, defaultDay]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -92,7 +116,7 @@ export default function AddScheduleModal({
     <div className="add-item-modal" role="presentation">
       <div className="add-item-dialog" role="dialog" aria-modal="true">
         <div className="dialog-titlebar">
-          <span className="dialog-title">Нова подія розкладу</span>
+          <span className="dialog-title">{title}</span>
           <button
             type="button"
             className="dialog-icon-button dialog-icon-button--close"
@@ -148,6 +172,7 @@ export default function AddScheduleModal({
                 >
                   <option value="lecture">Лекція</option>
                   <option value="practice">Практика</option>
+                  <option value="remote">Дистанційне</option>
                   <option value="other">Інше</option>
                 </select>
               </label>
@@ -209,7 +234,7 @@ export default function AddScheduleModal({
               className="primary-button save-item-button"
               disabled={isSaving}
             >
-              {isSaving ? "Зберігаю…" : "Зберегти"}
+              {isSaving ? "Зберігаю…" : submitLabel}
             </button>
           </div>
         </form>

@@ -53,16 +53,33 @@ export async function insertScheduleItem(item) {
   return fromRow(data);
 }
 
+export async function updateScheduleItem(id, item) {
+  const { data, error } = await supabase
+    .from(TABLE)
+    .update(toRow(item))
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return fromRow(data);
+}
+
 export async function deleteScheduleItem(id) {
   const { error } = await supabase.from(TABLE).delete().eq("id", id);
   if (error) throw error;
 }
 
-// Subscribes to inserts/deletes so both people see changes live.
+// Subscribes to inserts, updates, and deletes so both people see changes live.
 // Call the returned function to unsubscribe (e.g. in a useEffect cleanup).
-export function subscribeToScheduleChanges({ onInsert, onDelete }) {
+export function subscribeToScheduleChanges({ onInsert, onUpdate, onDelete }) {
   const channel = supabase
     .channel("schedule_items_changes")
+    .on(
+      "postgres_changes",
+      { event: "UPDATE", schema: "public", table: TABLE },
+      (payload) => onUpdate?.(fromRow(payload.new)),
+    )
     .on(
       "postgres_changes",
       { event: "INSERT", schema: "public", table: TABLE },
